@@ -1,4 +1,4 @@
-package pl.edu.go;
+package pl.edu.go.model;
 
 public class Position {
 }
