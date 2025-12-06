@@ -29,4 +29,18 @@ public class NetworkHandler {
         out.writeObject(move);
         out.flush();
     }
+
+    public Move receiveMove() throws IOException, ClassNotFoundException {
+        return (Move) in.readObject();
+    }
+
+    public void close() {
+        try {
+            in.close();
+            out.close();
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
