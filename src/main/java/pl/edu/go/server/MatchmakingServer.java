@@ -1,14 +1,17 @@
+package server;
 import java.io.*;
 import java.net.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import server.networkInterfaces.ClientConnection;
 
 public class MatchmakingServer {
 
     private static final int PORT = 5000;
 
     // Kolejka oczekujących graczy
-    private static final LinkedBlockingQueue<ClientHandler> waitingPlayers = new LinkedBlockingQueue<>();
+    private static final LinkedBlockingQueue<ClientConnection> waitingPlayers = new LinkedBlockingQueue<>();
 
     public static void main(String[] args) {
         System.out.println("Serwer matchmakingu uruchomiony na porcie " + PORT);
@@ -17,9 +20,10 @@ public class MatchmakingServer {
 
             while (true) {
                 Socket socket = serverSocket.accept();
-                System.out.println("Nowy klient połączony: " + socket);
+                //System.out.println("Nowy klient połączony: " + socket);
 
                 ClientHandler handler = new ClientHandler(socket);
+                handler.setMessageListener(msg -> System.out.println("Odebrano od " + handler.getSocket() + ": " + msg));
                 Thread t = new Thread(handler);
                 t.start();
 
@@ -33,12 +37,12 @@ public class MatchmakingServer {
     }
 
     // Próba sparowania graczy
-    private static synchronized void matchmaking(ClientHandler newPlayer) {
+    private static synchronized void matchmaking(ClientConnection newPlayer) {
         try {
             // jeśli już jest ktoś w kolejce – parujemy
             if (!waitingPlayers.isEmpty()) {
-                ClientHandler player1 = waitingPlayers.poll();
-                ClientHandler player2 = newPlayer;
+                ClientConnection player1 = waitingPlayers.poll();
+                ClientConnection player2 = newPlayer;
 
                 if (player1 != null && player2 != null) {
                     System.out.println("Parowanie graczy: " + player1.getSocket() + " <-> " + player2.getSocket());

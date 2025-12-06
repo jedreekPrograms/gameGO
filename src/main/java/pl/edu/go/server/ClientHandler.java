@@ -1,13 +1,17 @@
+package server;
 import java.io.*;
 import java.net.*;
 
-public class ClientHandler implements Runnable {
+import server.networkInterfaces.MessageListener;
+import server.networkInterfaces.ClientConnection;
+//Domyslna implementacja komunikacji z klientem i obslugi klientow
+public class ClientHandler implements Runnable, ClientConnection {
 
     private Socket socket;
     private BufferedReader in;
     private PrintWriter out;
-
-    private ClientHandler partner; // drugi gracz w parze
+    private MessageListener listener;
+    private ClientConnection partner; // drugi gracz w parze
 
     public ClientHandler(Socket socket) {
         this.socket = socket;
@@ -29,7 +33,9 @@ public class ClientHandler implements Runnable {
             while ((msg = in.readLine()) != null) {
 
                 System.out.println("[" + socket + "] " + msg);
-
+                if (listener != null) {
+                    listener.onMessage(msg);
+                }
                 // komunikacja TYLKO w ramach pary
                 if (partner != null) {
                     partner.send(msg);
@@ -42,11 +48,17 @@ public class ClientHandler implements Runnable {
             close();
         }
     }
+    
+    @Override
+    public void setMessageListener(MessageListener listener) {
+        this.listener = listener;
+    }
 
-    public void setPartner(ClientHandler partner) {
+    public void setPartner(ClientConnection partner) {
         this.partner = partner;
     }
 
+    @Override
     public void send(String msg) {
         out.println(msg);
     }
@@ -55,7 +67,7 @@ public class ClientHandler implements Runnable {
         return socket;
     }
 
-    private void close() {
+    public void close() {
         try {
             socket.close();
         } catch (IOException ignored) {}
