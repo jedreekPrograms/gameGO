@@ -2,6 +2,7 @@ package pl.edu.go.client;
 
 import pl.edu.go.model.Board;
 import pl.edu.go.model.Color;
+import pl.edu.go.model.Move;
 
 import java.util.Scanner;
 
@@ -37,5 +38,38 @@ public class ConsoleUI {
             }
             System.out.println();
         }
+    }
+
+    public String getMoveCommand(Color color, Board board) {
+        while(true) {
+            System.out.println(color + " move (format: x y, pass, resign): ");
+            String line = scanner.nextLine().trim();
+            if(line.isEmpty()) continue;
+
+            String lower = line.toLowerCase();
+            if (lower.equals("pass")) {
+                return "PASS";
+            } else if (lower.equals("resign") || lower.equals("resign()")) {
+                return "RESIGN";
+            } else {
+                String[] parts = line.split("\\s+");
+                if (parts.length == 2) {
+                    try {
+                        int x = Integer.parseInt(parts[0]);
+                        int y = Integer.parseInt(parts[1]);
+                        if (x >= 0 && x < board.getSize() && y >= 0 && y < board.getSize()) {
+                            return "MOVE " + x + " " + y;
+                        } else {
+                            System.out.println("Współdrzędne poza planszą (0.." + (board.getSize() - 1) + ").");
+                        }
+                    } catch (NumberFormatException e) {
+                        System.out.println("Niepoprawne liczby. Spróbuj ponownie.");
+                    }
+                } else {
+                    System.out.println("Niepoprawny format. Użyj 'x y' lub 'pass' lub 'resign'.");
+                }
+            }
+        }
+
     }
 }
