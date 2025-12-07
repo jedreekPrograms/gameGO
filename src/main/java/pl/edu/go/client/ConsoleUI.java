@@ -16,15 +16,20 @@ public class ConsoleUI {
     }
 
     public void displayBoard(Board board) {
+        if (board == null) {
+            System.out.println("(break planszy)");
+            return;
+        }
+
         int size = board.getSize();
-        System.out.print("  ");
+        System.out.print("   ");
         for (int x = 0; x < size; x++) {
-            System.out.print(x + " ");
+            System.out.printf("%2d", x);
         }
         System.out.println();
 
         for (int y = 0; y < size; y++) {
-            System.out.print(y + " ");
+            System.out.printf("%2d ", y);
             for (int x = 0; x < size; x++) {
                 Color c = board.get(x, y);
                 char symbol;
@@ -57,10 +62,10 @@ public class ConsoleUI {
                     try {
                         int x = Integer.parseInt(parts[0]);
                         int y = Integer.parseInt(parts[1]);
-                        if (x >= 0 && x < board.getSize() && y >= 0 && y < board.getSize()) {
-                            return "MOVE " + x + " " + y;
+                        if (board != null && (x < 0 || x >= board.getSize() || y < 0 || y >= board.getSize())) {
+                            System.out.println("Współrzędne poza planszą (0.." + (board.getSize() - 1) + ").");
                         } else {
-                            System.out.println("Współdrzędne poza planszą (0.." + (board.getSize() - 1) + ").");
+                            return "MOVE " + x + " " + y;
                         }
                     } catch (NumberFormatException e) {
                         System.out.println("Niepoprawne liczby. Spróbuj ponownie.");
@@ -70,6 +75,5 @@ public class ConsoleUI {
                 }
             }
         }
-
     }
 }

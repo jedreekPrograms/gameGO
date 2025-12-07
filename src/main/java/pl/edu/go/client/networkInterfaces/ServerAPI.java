@@ -1,4 +1,4 @@
-package client.networkInterfaces;
+package pl.edu.go.client.networkInterfaces;
 //Interfejs do komunikacji klienta z serwerem(do dokończenia)
 public interface ServerAPI {
 

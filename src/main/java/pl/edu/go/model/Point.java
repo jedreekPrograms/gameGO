@@ -18,4 +18,14 @@ public class Point {
         return x == point.x && y == point.y;
     }
 
+    @Override
+    public int hashCode() {
+        return 31 * x + y;
+    }
+
+    @Override
+    public String toString() {
+        return "(" + x + "," + y + ")";
+    }
+
 }

@@ -1,13 +1,21 @@
-package server.commandInterfaces;
+package pl.edu.go.server.commandInterfaces;
 
-import server.GameSession;
-import server.networkInterfaces.ClientConnection;
+import pl.edu.go.model.Color;
+import pl.edu.go.model.Move;
+import pl.edu.go.server.GameSession;
+import pl.edu.go.server.networkInterfaces.ClientConnection;
 
 public class PassCommand implements GameCommand {
 
     @Override
     public boolean execute(String[] args, GameSession session, ClientConnection sender) {
-        session.sendToBoth("PASS " + session.getPlayerColor(sender));
+
+        Color color = session.getPlayerColor(sender);
+        Move move = Move.pass(color);
+
+        session.getGame().applyMove(move);
+
+        session.sendToBoth("PASS " + color);
         return true;
     }
 }

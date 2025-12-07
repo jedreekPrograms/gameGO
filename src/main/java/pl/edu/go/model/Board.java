@@ -9,6 +9,12 @@ public class Board {
     public Board(int size) {
         this.size = size;
         this.grid = new Color[size][size];
+
+        for (int x = 0; x < size; x++) {
+            for (int y = 0; y < size; y++) {
+                grid[x][y] = Color.EMPTY;
+            }
+        }
     }
 
     public int getSize() {
@@ -16,24 +22,19 @@ public class Board {
     }
 
     public Color get(int x, int y) {
+        if (x < 0 || x >= size || y < 0 || y >= size) return null;
         return grid[x][y];
     }
 
     private boolean isEmpty(int x, int y) {
-        return grid[x][y] == Color.EMPTY;
+        Color c = get(x, y);
+        return c == Color.EMPTY;
     }
 
-    int[][] moves = {
-            {-1, -1}, {-1, 0}, {-1, 1},
-            { 0, -1},          { 0, 1},
-            { 1, -1}, { 1, 0}, { 1, 1}
-    };
-
-
     public int placeStone(Color color, int x, int y) {
-        if (!isEmpty(x, y)) {
-            return -1;
-        }
+
+        if (x < 0 || x >= size || y < 0 || y >= size) return -1;
+        if (!isEmpty(x, y)) return -1;
 
         grid[x][y] = color;
 
@@ -62,7 +63,7 @@ public class Board {
         Set<Point> myLiberties = getLiberties(myGroup);
 
         if (myLiberties.isEmpty() && totalCaptured == 0) {
-            grid[x][y] = null;
+            grid[x][y] = Color.EMPTY;
             return -1;
         }
 
@@ -73,24 +74,25 @@ public class Board {
         Set<Point> group = new HashSet<>();
         Color color = grid[x][y];
 
-        if (color == Color.EMPTY) {
+        if (color == null || color == Color.EMPTY) {
             return group;
         }
 
         Deque<Point> stack = new ArrayDeque<>();
-        stack.push(new Point(x, y));
-        group.add(new Point(x, y));
+        Point start = new Point(x, y);
+        stack.push(start);
+        group.add(start);
 
         while(!stack.isEmpty()) {
             Point p = stack.pop();
             for (Point n : getAdjacentPoints(p.x, p.y)) {
-                if (get(n.x, n.y) == color && !group.contains(n)) {
+                Color c = get(n.x, n.y);
+                if (c == color && !group.contains(n)) {
                     group.add(n);
                     stack.push(n);
                 }
             }
         }
-
         return group;
     }
 
@@ -104,7 +106,6 @@ public class Board {
                 }
             }
         }
-
         return liberties;
     }
 
@@ -127,7 +128,7 @@ public class Board {
     }
 
     public int computeHash() {
-        int hash = 0;
+        int hash = 1;
         int prime = 31;
 
         for (int x = 0; x < size; x++) {
@@ -149,5 +150,20 @@ public class Board {
             }
         }
         return hash;
+    }
+
+    public String render() {
+        StringBuilder sb = new StringBuilder();
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                Color c = get(x, y);
+                char ch = '.';
+                if (c == Color.BLACK) ch = 'B';
+                else if (c == Color.WHITE) ch = 'W';
+                sb.append(ch);
+            }
+            sb.append('\n');
+        }
+        return sb.toString();
     }
 }

@@ -1,32 +1,37 @@
-package client.networkInterfaces;
+package pl.edu.go.client.networkInterfaces;
+import pl.edu.go.client.networkInterfaces.ServerAPI;
+
 import java.io.*;
 import java.net.*;
 //Domyślna implementacja interfejsu ServerAPI
 public class SocketServerAPI implements ServerAPI {
 
-    private Socket socket;
-    private PrintWriter out;
-    private BufferedReader in;
+    private final Socket socket;
+    private final PrintWriter out;
+    private final BufferedReader in;
 
     private MessageListener listener;
+    private Thread readerThread;
 
     public SocketServerAPI(String host, int port) throws IOException {
-        socket = new Socket(host, port);
+        this.socket = new Socket(host, port);
 
-        out = new PrintWriter(socket.getOutputStream(), true);
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        this.out = new PrintWriter(socket.getOutputStream(), true);
+        this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
         // Wątek odbioru danych
-        new Thread(() -> {
+        readerThread= new Thread(() -> {
             try {
-                String msg;
-                while ((msg = in.readLine()) != null) {
+                String line;
+                while ((line = in.readLine()) != null) {
                     if (listener != null) {
-                        listener.onMessage(msg);
+                        listener.onMessage(line);
                     }
                 }
             } catch (IOException ignored) {}
-        }).start();
+        });
+        readerThread.setDaemon(true);
+        readerThread.start();
     }
 
     @Override

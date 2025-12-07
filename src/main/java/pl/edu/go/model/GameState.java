@@ -51,6 +51,7 @@ public class GameState {
                 return true;
 
             case PASS:
+                if (move.getColor() != nextToMove) return false;
                 nextToMove = nextToMove.opponent();
                 return true;
 

@@ -1,19 +1,27 @@
-package server;
-import java.io.*;
-import java.net.*;
+package pl.edu.go.server;
 
-import server.networkInterfaces.MessageListener;
-import server.networkInterfaces.ClientConnection;
+import pl.edu.go.server.networkInterfaces.ClientConnection;
+import pl.edu.go.server.networkInterfaces.MessageListener;
+import pl.edu.go.model.Color;
+import pl.edu.go.model.Move;
+import pl.edu.go.model.Position;
+import pl.edu.go.server.GameSession;
+
+import java.io.*;
+import java.net.Socket;
+
 //Domyslna implementacja komunikacji z klientem i obslugi klientow
 public class ClientHandler implements Runnable, ClientConnection {
 
-    private Socket socket;
+    //socket powinien byc final !!!!!!!!!!!!!!!!!!!!!
+    private final Socket socket;
     private BufferedReader in;
     private PrintWriter out;
     private MessageListener listener;
     private ClientConnection partner; // drugi gracz w parze
-    private GameSession session; // nowa rzecz
-    private GoGame.Color assignedColor;
+    private GameSession session;
+    // color z mojej logiki!!!!!!!!!!!!!!!!!!!!!!!!
+    private Color assignedColor;
 
 
     public ClientHandler(Socket socket) {
@@ -24,28 +32,31 @@ public class ClientHandler implements Runnable, ClientConnection {
             out = new PrintWriter(socket.getOutputStream(), true);
 
         } catch (IOException e) {
-            System.out.println("Błąd inicjalizacji klienta");
+            System.out.println("Błąd inicjalizacji klienta" + e.getMessage());
         }
     }
 
-    public void setGameSession(GameSession session, GoGame.Color color) {
+    @Override
+    public void setGameSession(GameSession session, Color color) {
         this.session = session;
         this.assignedColor = color;
-        send("COLOR " + color.name());
+        // poinformuj klienta jaki kolor dostał i że sesja jest gotowa
+        send("START " + color.name());
     }
 
     @Override
     public void run() {
         try {
             String msg;
-
             while ((msg = in.readLine()) != null) {
-
-            if (session != null) {
-                session.onMessage(this, msg);
+                // Przekaż komunikat do sesji, jeśli jest przypisana
+                if (session != null) {
+                    session.onMessage(this, msg);
+                } else {
+                    // Można logować lub reagować wstępnie
+                    System.out.println("Wiadomość przed przypisaniem do sesji: " + msg);
                 }
             }
-
         } catch (IOException e) {
             System.out.println("Klient rozłączony: " + socket);
         } finally {
@@ -62,6 +73,8 @@ public class ClientHandler implements Runnable, ClientConnection {
         this.partner = partner;
     }
 
+
+
     @Override
     public void send(String msg) {
         out.println(msg);
@@ -73,7 +86,17 @@ public class ClientHandler implements Runnable, ClientConnection {
 
     public void close() {
         try {
-            socket.close();
+            //zmiana !!!!!!!!!!!!!!!!!
+            if (!socket.isClosed()) socket.close();
         } catch (IOException ignored) {}
+    }
+
+    //gettery !!!!!!!!!!!!!!!
+    public PrintWriter getOut() {
+        return out;
+    }
+
+    public Color getAssignedColor() {
+        return assignedColor;
     }
 }

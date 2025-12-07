@@ -1,10 +1,14 @@
-package server;
+package pl.edu.go.server;
+
+import pl.edu.go.server.commandInterfaces.CommandRegistry;
+import pl.edu.go.server.networkInterfaces.ClientConnection;
+import pl.edu.go.server.networkInterfaces.MessageListener;
+import pl.edu.go.server.networkInterfaces.ClientConnection;
+import pl.edu.go.model.Color;
+
 import java.io.*;
 import java.net.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import server.networkInterfaces.ClientConnection;
 
 public class MatchmakingServer {
 
@@ -43,25 +47,29 @@ public class MatchmakingServer {
             if (!waitingPlayers.isEmpty()) {
                 ClientConnection player1 = waitingPlayers.poll();
                 ClientConnection player2 = newPlayer;
-
-                GameSession session = new GameSession(player1, player2);
-
-                player1.setGameSession(session, GoGame.Color.WHITE);
-                player2.setGameSession(session, GoGame.Color.BLACK);
-
-                if (player1 != null && player2 != null) {
-                    System.out.println("Parowanie graczy: " + player1.getSocket() + " <-> " + player2.getSocket());
-
-                    // Parowanie i nadanie kolorów
-                    player1.setPartner(player2);
-                    player2.setPartner(player1);
-
-                    player1.send("WHITE");
-                    player2.send("BLACK");
-
-                    player1.send("GAME_START");
-                    player2.send("GAME_START");
+                //patrzymy czy klienci istnieja !!!!!!!!!
+                if (player1 == null || player2 == null) {
+                    if (player2 != null) {
+                        waitingPlayers.add(player2);
+                        player2.send("WAITING_FOR_OPPONENT");
+                    }
+                    return;
                 }
+                CommandRegistry registry = new CommandRegistry();
+                registry.register("MOVE", new pl.edu.go.server.commandInterfaces.MoveCommand());
+                registry.register("PASS", new pl.edu.go.server.commandInterfaces.PassCommand());
+                registry.register("RESIGN", new pl.edu.go.server.commandInterfaces.ResignCommand());
+                //tu rozmiar dodalem
+                GameSession session = new GameSession(player1, player2, 19, registry);
+
+                player1.setGameSession(session, Color.WHITE);
+                player2.setGameSession(session, Color.BLACK);
+                //parujemy graczy !!!!!!!!!!!!!!!!!
+                System.out.println("Parowanie graczy: " + player1.getSocket() + " <-> " + player2.getSocket());
+
+
+                player1.send("INFO You are WHITE");
+                player2.send("INFO You are BLACK");
 
             } else {
                 // nikt nie czeka – ustawiamy klienta jako oczekującego
