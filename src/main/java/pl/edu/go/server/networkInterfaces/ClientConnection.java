@@ -3,7 +3,7 @@ package server.networkInterfaces;
 import java.net.Socket;
 
 import server.GameSession;
-import server.GoGame;
+import server.goGame.GoGame;
 //Interfejs do komunikacji serwera z klientem
 public interface ClientConnection {
 

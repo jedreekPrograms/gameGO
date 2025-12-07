@@ -3,6 +3,7 @@ import java.io.*;
 import java.net.*;
 
 import server.networkInterfaces.MessageListener;
+import server.goGame.GoGame;
 import server.networkInterfaces.ClientConnection;
 //Domyslna implementacja komunikacji z klientem i obslugi klientow
 public class ClientHandler implements Runnable, ClientConnection {

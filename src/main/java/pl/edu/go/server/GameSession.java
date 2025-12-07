@@ -3,6 +3,7 @@ package server;
 import server.commandInterfaces.MoveCommand;
 import server.commandInterfaces.PassCommand;
 import server.commandInterfaces.ResignCommand;
+import server.goGame.GoGame;
 import server.networkInterfaces.ClientConnection;
 
 public class GameSession {

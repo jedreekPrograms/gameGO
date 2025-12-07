@@ -1,7 +1,7 @@
 package server.commandInterfaces;
 
 import server.GameSession;
-import server.GoGame;
+import server.goGame.GoGame;
 import server.networkInterfaces.ClientConnection;
 
 public class ResignCommand implements GameCommand {

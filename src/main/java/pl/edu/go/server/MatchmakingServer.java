@@ -4,6 +4,7 @@ import java.net.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import server.goGame.GoGame;
 import server.networkInterfaces.ClientConnection;
 
 public class MatchmakingServer {
