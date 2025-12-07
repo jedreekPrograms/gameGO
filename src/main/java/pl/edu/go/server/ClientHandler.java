@@ -12,6 +12,9 @@ public class ClientHandler implements Runnable, ClientConnection {
     private PrintWriter out;
     private MessageListener listener;
     private ClientConnection partner; // drugi gracz w parze
+    private GameSession session; // nowa rzecz
+    private GoGame.Color assignedColor;
+
 
     public ClientHandler(Socket socket) {
         this.socket = socket;
@@ -25,6 +28,12 @@ public class ClientHandler implements Runnable, ClientConnection {
         }
     }
 
+    public void setGameSession(GameSession session, GoGame.Color color) {
+        this.session = session;
+        this.assignedColor = color;
+        send("COLOR " + color.name());
+    }
+
     @Override
     public void run() {
         try {
@@ -32,13 +41,8 @@ public class ClientHandler implements Runnable, ClientConnection {
 
             while ((msg = in.readLine()) != null) {
 
-                System.out.println("[" + socket + "] " + msg);
-                if (listener != null) {
-                    listener.onMessage(msg);
-                }
-                // komunikacja TYLKO w ramach pary
-                if (partner != null) {
-                    partner.send(msg);
+            if (session != null) {
+                session.onMessage(this, msg);
                 }
             }
 

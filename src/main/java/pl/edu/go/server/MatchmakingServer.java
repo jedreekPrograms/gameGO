@@ -44,6 +44,11 @@ public class MatchmakingServer {
                 ClientConnection player1 = waitingPlayers.poll();
                 ClientConnection player2 = newPlayer;
 
+                GameSession session = new GameSession(player1, player2);
+
+                player1.setGameSession(session, GoGame.Color.WHITE);
+                player2.setGameSession(session, GoGame.Color.BLACK);
+
                 if (player1 != null && player2 != null) {
                     System.out.println("Parowanie graczy: " + player1.getSocket() + " <-> " + player2.getSocket());
 

@@ -1,6 +1,9 @@
 package server.networkInterfaces;
 
 import java.net.Socket;
+
+import server.GameSession;
+import server.GoGame;
 //Interfejs do komunikacji serwera z klientem
 public interface ClientConnection {
 
@@ -17,4 +20,6 @@ public interface ClientConnection {
     void close();
 
     void setPartner(ClientConnection partner);
+
+    void setGameSession(GameSession session, GoGame.Color color);
 }
