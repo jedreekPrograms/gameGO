@@ -3,10 +3,13 @@ package pl.edu.go.server.commandInterfaces;
 import pl.edu.go.model.Color;
 import pl.edu.go.model.Move;
 import pl.edu.go.model.Position;
+import pl.edu.go.model.MoveFactory;
 import pl.edu.go.server.GameSession;
 import pl.edu.go.server.networkInterfaces.ClientConnection;
 
 public class MoveCommand implements GameCommand {
+
+    private final MoveFactory moveFactory = new MoveFactory();
 
     @Override
     public boolean execute(String[] args, GameSession session, ClientConnection sender) {
@@ -21,7 +24,8 @@ public class MoveCommand implements GameCommand {
 
         Color color = session.getPlayerColor(sender);
 
-        Move move = Move.place(new Position(x, y), color);
+        Position pos = new Position(x, y);
+        Move move = moveFactory.createPlace(pos, color);
 
         boolean ok = session.getGame().applyMove(move);
 

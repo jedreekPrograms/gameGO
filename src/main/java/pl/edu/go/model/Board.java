@@ -6,6 +6,8 @@ public class Board {
     private final int size;
     private final Color[][] grid;
 
+    private final RulesEngine rules = RulesEngine.getInstance();
+
     public Board(int size) {
         this.size = size;
         this.grid = new Color[size][size];
@@ -26,7 +28,7 @@ public class Board {
         return grid[x][y];
     }
 
-    private boolean isEmpty(int x, int y) {
+    public boolean isEmpty(int x, int y) {
         Color c = get(x, y);
         return c == Color.EMPTY;
     }
@@ -40,27 +42,23 @@ public class Board {
 
         int totalCaptured = 0;
 
-        Color enemy;
+        Color enemy = color.opponent();
 
-        if (color == Color.BLACK) {
-            enemy = Color.WHITE;
-        } else {
-            enemy = Color.BLACK;
-        }
-
+        // sprawdzamy grupy przeciwnika
         for (Point p : getAdjacentPoints(x, y)) {
             if (get(p.x, p.y) == enemy) {
-                Set<Point> enemyGroup = getGroup(p.x, p.y);
-                Set<Point> liberties = getLiberties(enemyGroup);
+                Set<Point> enemyGroup = rules.getGroup(this, p.x, p.y);
+                Set<Point> liberties = rules.getLiberties(this, enemyGroup);
 
-                if(liberties.isEmpty()) {
+                if (liberties.isEmpty()) {
                     totalCaptured += removeGroup(enemyGroup);
                 }
             }
         }
 
-        Set<Point> myGroup = getGroup(x, y);
-        Set<Point> myLiberties = getLiberties(myGroup);
+        // sprawdzamy czy nasza grupa nie jest samobójstwem
+        Set<Point> myGroup = rules.getGroup(this, x, y);
+        Set<Point> myLiberties = rules.getLiberties(this, myGroup);
 
         if (myLiberties.isEmpty() && totalCaptured == 0) {
             grid[x][y] = Color.EMPTY;
@@ -70,53 +68,14 @@ public class Board {
         return totalCaptured;
     }
 
-    public Set<Point> getGroup(int x, int y) {
-        Set<Point> group = new HashSet<>();
-        Color color = grid[x][y];
-
-        if (color == null || color == Color.EMPTY) {
-            return group;
-        }
-
-        Deque<Point> stack = new ArrayDeque<>();
-        Point start = new Point(x, y);
-        stack.push(start);
-        group.add(start);
-
-        while(!stack.isEmpty()) {
-            Point p = stack.pop();
-            for (Point n : getAdjacentPoints(p.x, p.y)) {
-                Color c = get(n.x, n.y);
-                if (c == color && !group.contains(n)) {
-                    group.add(n);
-                    stack.push(n);
-                }
-            }
-        }
-        return group;
-    }
-
-    public Set<Point> getLiberties(Set<Point> group) {
-        Set<Point> liberties = new HashSet<>();
-
-        for(Point p : group) {
-            for (Point n : getAdjacentPoints(p.x, p.y)) {
-                if (isEmpty(n.x, n.y)) {
-                    liberties.add(n);
-                }
-            }
-        }
-        return liberties;
-    }
-
     public int removeGroup(Set<Point> group) {
         for (Point p: group) {
-            grid[p.x][p.y] = null;
+            grid[p.x][p.y] = Color.EMPTY;
         }
         return group.size();
     }
 
-    private List<Point> getAdjacentPoints(int x, int y) {
+    public List<Point> getAdjacentPoints(int x, int y) {
         List<Point> list = new ArrayList<>();
 
         if(x > 0) list.add(new Point(x - 1, y));
@@ -135,16 +94,11 @@ public class Board {
             for(int y = 0; y < size; y++) {
                 Color c = grid[x][y];
 
-                int val;
-                if (c == null) {
-                    val = 0;
-                } else {
-                    if (c == Color.BLACK) {
-                        val = 1;
-                    } else {
-                        val = 2;
-                    }
-                }
+                int val = switch (c) {
+                    case EMPTY -> 0;
+                    case BLACK -> 1;
+                    case WHITE -> 2;
+                };
 
                 hash = hash * prime + val;
             }
@@ -157,9 +111,11 @@ public class Board {
         for (int y = 0; y < size; y++) {
             for (int x = 0; x < size; x++) {
                 Color c = get(x, y);
-                char ch = '.';
-                if (c == Color.BLACK) ch = 'B';
-                else if (c == Color.WHITE) ch = 'W';
+                char ch = switch (c) {
+                    case EMPTY -> '.';
+                    case BLACK -> 'B';
+                    case WHITE -> 'W';
+                };
                 sb.append(ch);
             }
             sb.append('\n');

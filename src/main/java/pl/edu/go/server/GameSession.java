@@ -5,16 +5,13 @@ import pl.edu.go.server.commandInterfaces.GameCommand;
 import pl.edu.go.server.networkInterfaces.ClientConnection;
 import pl.edu.go.model.GameState;
 import pl.edu.go.model.Move;
+import pl.edu.go.model.MoveFactory;
 import pl.edu.go.model.Position;
 import pl.edu.go.model.Color;
 import pl.edu.go.model.Board;
 
 import java.util.Objects;
 
-/**
- * Zarządza pojedynczą sesją gry między dwoma klientami.
- * Używa pl.edu.go.model.GameState (który korzysta z pl.edu.go.model.Board itp.)
- */
 public class GameSession {
 
     private final ClientConnection whitePlayer;
@@ -23,23 +20,18 @@ public class GameSession {
     private boolean sessionEnded = false;
     private final CommandRegistry registry;
 
+    // NOWE:
+    private final MoveFactory moveFactory = new MoveFactory();
 
     public GameSession(ClientConnection whitePlayer, ClientConnection blackPlayer, int boardSize, CommandRegistry registry) {
         this.whitePlayer = whitePlayer;
         this.blackPlayer = blackPlayer;
         this.game = new GameState(boardSize);
         this.registry = registry;
-
-        // Wyślij start do obu - setGameSession już powinno wysłać START <COLOR>
-        // Teraz wyślij początkową planszę
-        //sendBoardToBoth();
-        // Czarny zaczyna (konwencja) -> jeśli chcesz dać informację o turze:
-        //sendToPlayer(getClientByColor(Color.BLACK), "YOUR_TURN");
     }
 
     public void start() {
         sendBoardToBoth();
-
         ClientConnection black = getClientByColor(Color.BLACK);
         if (black != null) black.send("YOUR_TURN");
     }
@@ -62,7 +54,6 @@ public class GameSession {
             return;
         }
 
-        // Sprawdź czy to tura tego gracza dla komend wymagających tury
         boolean requiresTurn = cmd.equals("MOVE") || cmd.equals("PASS");
         if (requiresTurn && !Objects.equals(game.getNextToMove(), senderColor)) {
             sender.send("ERROR Not your turn");
@@ -103,7 +94,9 @@ public class GameSession {
         }
 
         Position pos = new Position(x, y);
-        Move m = Move.place(pos, color);
+
+        // ❗ FABRYKA
+        Move m = moveFactory.createPlace(pos, color);
 
         synchronized (game) {
             boolean ok = game.applyMove(m);
@@ -112,7 +105,6 @@ public class GameSession {
                 return;
             }
 
-            // Na sukces: wyślij aktualny stan planszy obu, potwierdź ruch i powiadom przeciwnika
             sender.send("VALID");
             ClientConnection opp = getOpponent(sender);
             if (opp != null) {
@@ -120,15 +112,16 @@ public class GameSession {
             }
             sendBoardToBoth();
 
-            // Powiadom gracza, który teraz ma turę
             ClientConnection nextPlayer = getClientByColor(game.getNextToMove());
             if (nextPlayer != null) nextPlayer.send("YOUR_TURN");
         }
     }
 
-
     private void handlePass(ClientConnection sender, Color color) {
-        Move m = Move.pass(color);
+
+        // ❗ FABRYKA
+        Move m = moveFactory.createPass(color);
+
         synchronized (game) {
             boolean ok = game.applyMove(m);
             if (!ok) {
@@ -136,24 +129,25 @@ public class GameSession {
                 return;
             }
             sender.send("VALID");
+
             ClientConnection opp = getOpponent(sender);
             if (opp != null) {
                 opp.send("OPPONENT_PASSED " + color.name());
             }
+
             sendBoardToBoth();
 
-            // Powiadom gracza, który teraz ma turę
             ClientConnection nextPlayer = getClientByColor(game.getNextToMove());
             if (nextPlayer != null) nextPlayer.send("YOUR_TURN");
         }
     }
 
-
     private void handleResign(ClientConnection sender, Color color) {
         ClientConnection opp = getOpponent(sender);
-        // poinformuj obu, ustaw koniec sesji
+
         sender.send("RESIGN " + color.name());
         if (opp != null) opp.send("WINNER " + oppestsColor(opp).name());
+
         endSession();
     }
 
@@ -170,13 +164,13 @@ public class GameSession {
     private String serializeBoard(Board b) {
         StringBuilder sb = new StringBuilder();
         int size = b.getSize();
-        sb.append(size).append("\n"); // linia z rozmiarem (ułatwia klientowi)
+        sb.append(size).append("\n");
         for (int y = 0; y < size; y++) {
             for (int x = 0; x < size; x++) {
-                pl.edu.go.model.Color c = b.get(x, y);
+                Color c = b.get(x, y);
                 char ch;
-                if (c == null || c == pl.edu.go.model.Color.EMPTY) ch = '.';
-                else if (c == pl.edu.go.model.Color.BLACK) ch = 'B';
+                if (c == null || c == Color.EMPTY) ch = '.';
+                else if (c == Color.BLACK) ch = 'B';
                 else ch = 'W';
                 sb.append(ch);
             }
@@ -185,9 +179,7 @@ public class GameSession {
         return sb.toString();
     }
 
-    public GameState getGame() {
-        return game;
-    }
+    public GameState getGame() { return game; }
 
     public Color getPlayerColor(ClientConnection c) {
         if (c == whitePlayer) return Color.WHITE;
@@ -210,20 +202,16 @@ public class GameSession {
 
     public void endSession() {
         sessionEnded = true;
-        // opcjonalnie zetnij połączenia
         if (whitePlayer != null) whitePlayer.close();
         if (blackPlayer != null) blackPlayer.close();
     }
 
     public boolean handleCommand(String cmd, String[] args, ClientConnection sender) {
         GameCommand command = registry.get(cmd);
-
         if (command == null) {
             sender.send("ERROR Unknown command: " + cmd);
             return false;
         }
-
         return command.execute(args, this, sender);
     }
-
 }
