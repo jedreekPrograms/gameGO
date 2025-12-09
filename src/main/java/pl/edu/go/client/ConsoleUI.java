@@ -2,14 +2,12 @@ package pl.edu.go.client;
 
 import pl.edu.go.model.Board;
 import pl.edu.go.model.Color;
-import pl.edu.go.model.Move;
 
 import java.util.Scanner;
 
 public class ConsoleUI {
 
     private final Scanner scanner;
-
 
     public ConsoleUI(Scanner scanner) {
         this.scanner = scanner;

@@ -117,12 +117,15 @@ public class GameSession {
             ClientConnection opp = getOpponent(sender);
             if (opp != null) {
                 opp.send("OPPONENT_MOVED " + x + " " + y);
-                opp.send("YOUR_TURN");
             }
-            // Wyślij zserializowaną planszę do obu
             sendBoardToBoth();
+
+            // Powiadom gracza, który teraz ma turę
+            ClientConnection nextPlayer = getClientByColor(game.getNextToMove());
+            if (nextPlayer != null) nextPlayer.send("YOUR_TURN");
         }
     }
+
 
     private void handlePass(ClientConnection sender, Color color) {
         Move m = Move.pass(color);
@@ -136,11 +139,15 @@ public class GameSession {
             ClientConnection opp = getOpponent(sender);
             if (opp != null) {
                 opp.send("OPPONENT_PASSED " + color.name());
-                opp.send("YOUR_TURN");
             }
             sendBoardToBoth();
+
+            // Powiadom gracza, który teraz ma turę
+            ClientConnection nextPlayer = getClientByColor(game.getNextToMove());
+            if (nextPlayer != null) nextPlayer.send("YOUR_TURN");
         }
     }
+
 
     private void handleResign(ClientConnection sender, Color color) {
         ClientConnection opp = getOpponent(sender);

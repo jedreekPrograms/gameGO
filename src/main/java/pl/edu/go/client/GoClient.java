@@ -1,11 +1,11 @@
 package pl.edu.go.client;
 
- // twoja implementacja
 import pl.edu.go.client.networkInterfaces.MessageListener;
 import pl.edu.go.client.networkInterfaces.ServerAPI;
 import pl.edu.go.client.networkInterfaces.SocketServerAPI;
 import pl.edu.go.model.Board;
 import pl.edu.go.model.Color;
+import pl.edu.go.model.Position;
 
 import java.io.IOException;
 import java.util.Scanner;
@@ -20,7 +20,6 @@ public class GoClient {
     public GoClient(String host, int port) throws IOException {
         this.api = new SocketServerAPI(host, port);
         this.ui = new ConsoleUI(new Scanner(System.in));
-        this.localBoard = null; //stworzymy przy gamestart jak znamy rozmiar
     }
 
     public void run() {
@@ -32,33 +31,37 @@ public class GoClient {
         });
 
         Scanner scanner = new Scanner(System.in);
-        while(running) {
+
+        while (running) {
             try {
-                Board boardForInput = localBoard == null ? new Board(9) : localBoard;
                 Color promptColor = myColor == null ? Color.BLACK : myColor;
+                Board boardForInput = localBoard != null ? localBoard : new Board(19);
 
                 String command = ui.getMoveCommand(promptColor, boardForInput);
                 api.send(command);
+
                 if (command.equalsIgnoreCase("RESIGN")) {
                     System.out.println("You resigned. Exiting");
                     running = false;
-                    break;
                 }
             } catch (Exception e) {
                 System.out.println("Błąd: " + e.getMessage());
-                break;
+                running = false;
             }
-            api.close();
-            scanner.close();
         }
+
+        // zamknięcie dopiero po zakończeniu gry
+        api.close();
+        scanner.close();
     }
 
     private void handleServerMessage(String message) {
         if (message == null) return;
+        message = message.trim();
+        if (message.isEmpty()) return;
 
         if (message.startsWith("START")) {
             String[] parts = message.split("\\s+");
-
             if (parts.length >= 2) {
                 myColor = parts[1].equalsIgnoreCase("WHITE") ? Color.WHITE : Color.BLACK;
                 System.out.println("Assigned color: " + myColor);
@@ -72,14 +75,7 @@ public class GoClient {
         }
 
         if (message.startsWith("BOARD")) {
-            // format: BOARD\n<size>\n<line1>\n<line2>...
             String payload = message.substring("BOARD".length()).trim();
-            if (payload.isEmpty()) {
-                // możliwe, że serwer wysłał BOARD i dalej kolejne linie - w prostym protokole serwer może wysłać BOARD i od razu kolejne linie
-                // tutaj uproszczenie: wyświetlimy to co mamy
-                System.out.println("BOARD (empty payload)");
-                return;
-            }
             String[] lines = payload.split("\n");
             try {
                 int size = Integer.parseInt(lines[0].trim());
@@ -88,17 +84,14 @@ public class GoClient {
                     String row = lines[y + 1];
                     for (int x = 0; x < size && x < row.length(); x++) {
                         char ch = row.charAt(x);
-                        if (ch == 'B') b.getClass(); // no-op to avoid unused
-                        if (ch == 'B') {
-                            // ustaw bezpośrednio (nie ma setterów) — refleksja lub metoda pomocnicza; prostsze: użyj miejsca poprzez move application?
-                        }
+                        if (ch == 'B') b.placeStone(Color.BLACK, x, y);
+                        else if (ch == 'W') b.placeStone(Color.WHITE, x, y);
                     }
                 }
-                // prostsze: zamiast próbować modyfikować wewnętrzne pole — stwórz obiekt Board i ustaw poprzez miejscowe przypisanie
-                // ponieważ Board nie ma publicznych setterów do pojedynczych punktów, w tej wersji wyświetlimy payload
-                System.out.println("Board from server:\n" + payload);
+                localBoard = b;
+                ui.displayBoard(localBoard);
             } catch (NumberFormatException e) {
-                System.out.println("Board (no size):\n" + payload);
+                System.out.println("Invalid BOARD payload:\n" + payload);
             }
             return;
         }
@@ -124,7 +117,8 @@ public class GoClient {
         }
 
         if (message.startsWith("RESIGN")) {
-            System.out.println("RESIGN: " + message.substring(7));
+            System.out.println("RESIGN: " + message.substring("RESIGN".length()).trim());
+            running = false;
             return;
         }
 
@@ -135,7 +129,7 @@ public class GoClient {
         }
 
         if (message.startsWith("ERROR")) {
-            System.out.println("Server error: " + message.substring(6));
+            System.out.println("Server error: " + message.substring("ERROR".length()).trim());
             return;
         }
 
