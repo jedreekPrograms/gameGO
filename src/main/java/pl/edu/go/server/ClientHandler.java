@@ -4,7 +4,7 @@ import pl.edu.go.server.networkInterfaces.ClientConnection;
 import pl.edu.go.server.networkInterfaces.MessageListener;
 import pl.edu.go.model.Color;
 import pl.edu.go.model.Move;
-import pl.edu.go.model.Position;
+import pl.edu.go.model.Point;
 import pl.edu.go.server.GameSession;
 
 import java.io.*;

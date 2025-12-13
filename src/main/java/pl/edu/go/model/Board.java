@@ -6,7 +6,7 @@ public class Board {
     private final int size;
     private final Color[][] grid;
 
-    private final RulesEngine rules = RulesEngine.getInstance();
+    //private final RulesEngine rules = RulesEngine.getInstance();
 
     public Board(int size) {
         this.size = size;
@@ -47,8 +47,8 @@ public class Board {
         // sprawdzamy grupy przeciwnika
         for (Point p : getAdjacentPoints(x, y)) {
             if (get(p.x, p.y) == enemy) {
-                Set<Point> enemyGroup = rules.getGroup(this, p.x, p.y);
-                Set<Point> liberties = rules.getLiberties(this, enemyGroup);
+                Set<Point> enemyGroup = getGroup(p.x, p.y);
+                Set<Point> liberties = getLiberties(enemyGroup);
 
                 if (liberties.isEmpty()) {
                     totalCaptured += removeGroup(enemyGroup);
@@ -57,8 +57,8 @@ public class Board {
         }
 
         // sprawdzamy czy nasza grupa nie jest samobójstwem
-        Set<Point> myGroup = rules.getGroup(this, x, y);
-        Set<Point> myLiberties = rules.getLiberties(this, myGroup);
+        Set<Point> myGroup = getGroup(x, y);
+        Set<Point> myLiberties = getLiberties(myGroup);
 
         if (myLiberties.isEmpty() && totalCaptured == 0) {
             grid[x][y] = Color.EMPTY;
@@ -106,20 +106,61 @@ public class Board {
         return hash;
     }
 
-    public String render() {
-        StringBuilder sb = new StringBuilder();
-        for (int y = 0; y < size; y++) {
-            for (int x = 0; x < size; x++) {
-                Color c = get(x, y);
-                char ch = switch (c) {
-                    case EMPTY -> '.';
-                    case BLACK -> 'B';
-                    case WHITE -> 'W';
-                };
-                sb.append(ch);
-            }
-            sb.append('\n');
+//    public String render() {
+//        StringBuilder sb = new StringBuilder();
+//        for (int y = 0; y < size; y++) {
+//            for (int x = 0; x < size; x++) {
+//                Color c = get(x, y);
+//                char ch = switch (c) {
+//                    case EMPTY -> '.';
+//                    case BLACK -> 'B';
+//                    case WHITE -> 'W';
+//                };
+//                sb.append(ch);
+//            }
+//            sb.append('\n');
+//        }
+//        return sb.toString();
+//    }
+
+
+
+    public Set<Point> getGroup(int x, int y) {
+        Set<Point> group = new HashSet<>();
+        Color color = get(x, y);
+
+        if (color == null || color == Color.EMPTY) {
+            return group;
         }
-        return sb.toString();
+
+        Deque<Point> stack = new ArrayDeque<>();
+        Point start = new Point(x, y);
+        stack.push(start);
+        group.add(start);
+
+        while(!stack.isEmpty()) {
+            Point p = stack.pop();
+            for (Point n : getAdjacentPoints(p.x, p.y)) {
+                Color c = get(n.x, n.y);
+                if (c == color && !group.contains(n)) {
+                    group.add(n);
+                    stack.push(n);
+                }
+            }
+        }
+        return group;
+    }
+
+    public Set<Point> getLiberties(Set<Point> group) {
+        Set<Point> liberties = new HashSet<>();
+
+        for(Point p : group) {
+            for (Point n : getAdjacentPoints(p.x, p.y)) {
+                if (isEmpty(n.x, n.y)) {
+                    liberties.add(n);
+                }
+            }
+        }
+        return liberties;
     }
 }

@@ -2,7 +2,7 @@ package pl.edu.go.server.commandInterfaces;
 
 import pl.edu.go.model.Color;
 import pl.edu.go.model.Move;
-import pl.edu.go.model.Position;
+import pl.edu.go.model.Point;
 import pl.edu.go.model.MoveFactory;
 import pl.edu.go.server.GameSession;
 import pl.edu.go.server.networkInterfaces.ClientConnection;
@@ -24,7 +24,7 @@ public class MoveCommand implements GameCommand {
 
         Color color = session.getPlayerColor(sender);
 
-        Position pos = new Position(x, y);
+        Point pos = new Point(x, y);
         Move move = moveFactory.createPlace(pos, color);
 
         boolean ok = session.getGame().applyMove(move);

@@ -5,7 +5,7 @@ import pl.edu.go.client.networkInterfaces.ServerAPI;
 import pl.edu.go.client.networkInterfaces.SocketServerAPI;
 import pl.edu.go.model.Board;
 import pl.edu.go.model.Color;
-import pl.edu.go.model.Position;
+import pl.edu.go.model.Point;
 
 import java.io.IOException;
 import java.util.Scanner;

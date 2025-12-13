@@ -6,7 +6,7 @@ import pl.edu.go.server.networkInterfaces.ClientConnection;
 import pl.edu.go.model.GameState;
 import pl.edu.go.model.Move;
 import pl.edu.go.model.MoveFactory;
-import pl.edu.go.model.Position;
+import pl.edu.go.model.Point;
 import pl.edu.go.model.Color;
 import pl.edu.go.model.Board;
 
@@ -93,7 +93,7 @@ public class GameSession {
             return;
         }
 
-        Position pos = new Position(x, y);
+        Point pos = new Point(x, y);
 
         // ❗ FABRYKA
         Move m = moveFactory.createPlace(pos, color);
